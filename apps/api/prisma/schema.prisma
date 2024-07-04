@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Good {
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String
+  unit        Unit
+  categoryId  Int
+
+  Items    Item[]
+  Category Category @relation(fields: [categoryId], references: [id])
+}
+
+model Shelf {
+  id       Int @id @default(autoincrement())
+  row      Int
+  position Int
+  level    Int
+  capacity Int
+
+  Items Item[]
+
+  @@unique([row, position, level])
+}
+
+model Item {
+  id           Int      @id @default(autoincrement())
+  goodId       Int
+  pricePerUnit Float
+  shelfId      Int
+  quantity     Int
+  storageDate  DateTime
+  stockedById  Int
+
+  Good      Good  @relation(fields: [goodId], references: [id])
+  Shelf     Shelf @relation(fields: [shelfId], references: [id])
+  StockedBy User  @relation(fields: [stockedById], references: [id])
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  role      UserRole
+  deletedAt DateTime?
+  Items     Item[]
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  Goods Good[]
+}
+
+enum Unit {
+  pcs
+  kg
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}

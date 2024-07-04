@@ -1,0 +1,1477 @@
+openapi: 3.0.0
+info:
+  title: Warehouse API
+  version: 1.0.0
+  description: API for warehouse management. Only /auth/login endpoint is public. All other endpoints require authentication.
+servers:
+  - url: http://localhost:3000/api
+
+paths:
+  /categories:
+    get:
+      summary: Get all categories
+      description: Retrieve a list of categories.
+      tags:
+        - Categories
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Filter categories by name.
+        - in: query
+          name: withAmount
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: pagination
+          schema:
+            $ref: '#/components/schemas/PaginationQuery'
+          description: Pagination parameters.
+      responses:
+        200:
+          description: A list of categories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryReadManyResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    post:
+      summary: Create a new category
+      description: Create a new category.
+      tags:
+        - Categories
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateRequest'
+      responses:
+        201:
+          description: Category created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryReadResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+
+  /categories/{id}:
+    get:
+      summary: Get a category by ID
+      description: Retrieve a category by its ID.
+      tags:
+        - Categories
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the category to retrieve.
+      responses:
+        200:
+          description: Category fetched successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryReadResponse'
+        404:
+          description: Category not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        400:
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        500:
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    put:
+      summary: Update a category
+      description: Update a category by its ID.
+      tags:
+        - Categories
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the category to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateRequest'
+      responses:
+        200:
+          description: Category updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryReadResponse'
+        400:
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        404:
+          description: Category not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        500:
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    delete:
+      summary: Delete a category
+      description: Delete a category by its ID.
+      tags:
+        - Categories
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the category to delete.
+      responses:
+        204:
+          description: Category deleted successfully.
+        404:
+          description: Category not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        400:
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        500:
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Register a new user. Only accessible by authenticated admins.
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateData'
+      responses:
+        201:
+          description: User registered successfully.
+        400:
+          description: Validation error or user already exists.
+        500:
+          description: Server error.
+
+  /auth/login:
+    post:
+      summary: Login a user
+      description: Authenticate a user with email and password.
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        200:
+          description: User logged in successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          description: Incorrect email or password.
+        500:
+          description: Server error.
+
+  /auth:
+    get:
+      summary: Get list of users
+      description: Retrieve a list of users. Only accessible by authenticated admins.
+      tags:
+        - Users
+      parameters:
+        - in: query
+          name: email
+          schema:
+            type: string
+          description: Filter users by email.
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [ ADMIN, USER ]
+          description: Filter users by role.
+        - in: query
+          name: pagination
+          schema:
+            $ref: '#/components/schemas/PaginationQuery'
+          description: Pagination parameters.
+      responses:
+        200:
+          description: A list of users.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        400:
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        500:
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+
+  /auth/{id}:
+    put:
+      summary: Update a user
+      description: Update a user's details by ID. Only accessible by authenticated admins.
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the user to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateData'
+      responses:
+        200:
+          description: User updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        400:
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        404:
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        500:
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+
+    delete:
+      summary: Delete a user
+      description: Delete a user by ID. Only accessible by authenticated admins.
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the user to delete.
+      responses:
+        204:
+          description: User deleted successfully.
+        400:
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        404:
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        500:
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+
+  /auth/logout:
+    get:
+      summary: Logout the current user
+      description: Logout the currently authenticated user.
+      tags:
+        - Users
+      responses:
+        200:
+          description: User logged out successfully.
+        500:
+          description: Server error.
+  /shelves/single:
+    post:
+      summary: Create a single shelf
+      tags:
+        - Shelves
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShelfCreateData'
+      responses:
+        '201':
+          description: Shelf created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShelfCreateResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+  /shelves/bulk:
+    post:
+      summary: Create multiple shelves
+      tags:
+        - Shelves
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShelfCreateManyData'
+      responses:
+        '201':
+          description: Shelves created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShelfCreateManyResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+  /shelves/{id}:
+    get:
+      summary: Get a shelf by ID
+      tags:
+        - Shelves
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the shelf to get
+      responses:
+        '200':
+          description: Shelf fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShelfReadResponse'
+        '404':
+          description: Shelf not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    put:
+      summary: Update a shelf by ID
+      tags:
+        - Shelves
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the shelf to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShelfCreateData'
+      responses:
+        '200':
+          description: Shelf updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShelfCreateResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Conflict Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    delete:
+      summary: Delete a shelf by ID
+      tags:
+        - Shelves
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the shelf to delete
+      responses:
+        '204':
+          description: Shelf deleted successfully
+        '404':
+          description: Shelf not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+  /shelves:
+    get:
+      summary: Get shelves
+      tags:
+        - Shelves
+      parameters:
+        - in: query
+          name: row
+          schema:
+            type: integer
+          description: Filter shelves by row
+        - in: query
+          name: level
+          schema:
+            type: integer
+          description: Filter shelves by level
+        - in: query
+          name: position
+          schema:
+            type: integer
+          description: Filter shelves by position
+        - in: query
+          name: pagination
+          schema:
+            $ref: '#/components/schemas/PaginationQuery'
+          description: Page size for pagination
+        - in: query
+          name: freeCapacity
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Shelves fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShelfReadManyResponse'
+        '400':
+            description: Validation Error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+  /goods:
+    post:
+      summary: Create a new good
+      tags:
+        - Goods
+      description: Creates a new good in the system.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoodCreateData'
+      responses:
+        '201':
+          description: Good created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodCreateResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    get:
+      summary: Get list of goods
+      tags:
+        - Goods
+      description: Retrieves a list of goods.
+      parameters:
+        - name: name
+          in: query
+          description: Filter goods by name
+          schema:
+            type: string
+        - name: categoryName
+          in: query
+          description: Filter goods by category name
+          schema:
+            type: string
+          required: false
+        - name: withAmount
+          in: query
+          required: true
+          schema:
+            type: boolean
+        - name: pagination
+          in: query
+          schema:
+            $ref: '#/components/schemas/PaginationQuery'
+      responses:
+        '200':
+          description: Goods fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodReadManyResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+  /goods/{id}:
+    get:
+      summary: Get a good by ID
+      tags:
+        - Goods
+      description: Retrieves a good by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: withAmount
+          in: query
+          description: Include the amount of goods in the response
+          schema:
+            type: boolean
+          required: true
+      responses:
+        '200':
+          description: Good fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodReadResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Good not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    delete:
+      summary: Delete a good by ID
+      tags:
+        - Goods
+      description: Deletes a good by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Good deleted successfully
+        '404':
+          description: Good not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    post:
+      summary: Buy a good by ID
+      tags:
+        - Goods
+      description: Buys a specified amount of a good by its ID.
+      operationId: buyGood
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyGoodRequest'
+      responses:
+        '200':
+          description: Good bought successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyGoodResponse'
+        '404':
+          description: Good not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    put:
+      summary: Sell a good by ID
+      tags:
+        - Goods
+      description: Sells a specified amount of a good by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellGoodResponse'
+      responses:
+        '200':
+          description: Good sold successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: integer
+                  message:
+                    type: string
+        '404':
+          description: Good not found
+  /goods/admin/{id}:
+    put:
+      summary: Update a good by ID
+      tags:
+        - Goods
+      description: Updates a good by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoodCreateData'
+      responses:
+        '200':
+          description: Good updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodCreateResponse'
+        '404':
+          description: Good not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+  /stats:
+    get:
+      summary: Get warehouse stats
+      tags:
+        - Stats
+      parameters:
+        - in: query
+          name: total-value
+          schema:
+            type: boolean
+          description: Include total value in the response
+        - in: query
+          name: total-amount
+          schema:
+            type: boolean
+          description: Include total amount in the response
+        - in: query
+          name: total-capacity
+          schema:
+            type: boolean
+          description: Include total capacity in the response
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilterStats'
+      responses:
+        '200':
+          description: Warehouse stats fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStatsResponseWithMessage'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+  /items/{id}:
+    get:
+      summary: Get an item by ID
+      tags:
+        - Items
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the item to get
+      responses:
+        '200':
+          description: Item fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '404':
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+    put:
+      summary: Move an item by ID
+      tags:
+        - Items
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the item to move
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemUpdateData'
+      responses:
+        '200':
+          description: Item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '400':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Conflict Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+components:
+  schemas:
+    ShelfCreateData:
+      type: object
+      properties:
+        row:
+          type: integer
+        position:
+          type: integer
+        level:
+          type: integer
+        capacity:
+          type: integer
+      required:
+        - row
+        - position
+        - level
+        - capacity
+    ShelfCreateManyData:
+      type: object
+      properties:
+        fromRow:
+          type: integer
+        toRow:
+          type: integer
+        fromPosition:
+          type: integer
+        toPosition:
+          type: integer
+        fromLevel:
+          type: integer
+        toLevel:
+          type: integer
+        capacity:
+          type: integer
+      required:
+        - fromRow
+        - toRow
+        - fromPosition
+        - toPosition
+        - fromLevel
+        - toLevel
+        - capacity
+    Shelf:
+      type: object
+      properties:
+        id:
+          type: integer
+        row:
+          type: integer
+        position:
+          type: integer
+        level:
+          type: integer
+        capacity:
+          type: integer
+    ItemIdWithQuantity:
+      type: object
+      properties:
+        id:
+          type: integer
+        quantity:
+          type: number
+    ShelfWithItems:
+      allOf:
+        - $ref: '#/components/schemas/Shelf'
+        - type: object
+          properties:
+            Items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ItemIdWithQuantity'
+    ShelfWithItemsAndFreeCapacity:
+      allOf:
+        - $ref: '#/components/schemas/ShelfWithItems'
+        - type: object
+          properties:
+            freeCapacity:
+              type: integer
+    ShelfCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ShelfWithItemsAndFreeCapacity'
+        message:
+          type: string
+    ShelfCreateManyResponse:
+      type: object
+      properties:
+        data:
+          type: integer
+        message:
+          type: string
+    ShelfReadResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ShelfWithItemsAndFreeCapacity'
+        message:
+          type: string
+    ShelfReadManyResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShelfWithItemsAndFreeCapacity'
+        message:
+          type: string
+        pagination:
+            $ref: '#/components/schemas/PaginationResponse'
+    FilterGoods:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+    FilterStats:
+      type: object
+      properties:
+        goods:
+          $ref: '#/components/schemas/FilterGoods'
+    GetStatsResponse:
+      type: object
+      properties:
+        totalValue:
+          type: number
+        totalAmount:
+          type: object
+          properties:
+            totalAmountKg:
+              type: number
+            totalAmountPcs:
+              type: number
+          nullable: true
+        totalCapacity:
+          type: number
+    GetStatsResponseWithMessage:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/GetStatsResponse'
+        message:
+          type: string
+    PaginationQuery:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+      required:
+        - page
+        - pageSize
+    PaginationResponse:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+    ShelfData:
+      type: object
+      properties:
+        id:
+          type: integer
+        row:
+          type: integer
+        position:
+          type: integer
+        level:
+          type: integer
+      required:
+        - row
+        - position
+        - level
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        goodId:
+          type: integer
+        pricePerUnit:
+          type: number
+        quantity:
+          type: number
+        storageDate:
+          type: string
+          format: date-time
+        stockedById:
+          type: integer
+      required:
+        - id
+        - goodId
+        - pricePerUnit
+        - quantity
+        - storageDate
+        - stockedById
+    ItemWithShelf:
+      allOf:
+        - $ref: '#/components/schemas/Item'
+        - type: object
+      properties:
+        shelf:
+          $ref: '#/components/schemas/ShelfData'
+    ItemResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ItemWithShelf'
+        message:
+          type: string
+    ItemUpdateData:
+      type: object
+      properties:
+          shelf:
+            type: object
+            properties:
+              row:
+                type: integer
+              position:
+                type: integer
+              level:
+                type: integer
+            required:
+              - row
+              - position
+              - level
+      required:
+          - shelf
+    GoodCreateData:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        unit:
+            $ref: '#/components/schemas/Unit'
+        categoryName:
+          type: string
+      required:
+        - name
+        - category
+        - description
+        - unit
+        - categoryName
+    Good:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        unit:
+            $ref: '#/components/schemas/Unit'
+        categoryName:
+          type: string
+      required:
+        - id
+        - name
+        - description
+        - unit
+        - categoryName
+    GoodCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Good'
+        message:
+          type: string
+      required:
+        - data
+        - message
+    GoodWithAmount:
+      allOf:
+        - $ref: '#/components/schemas/Good'
+        - type: object
+      properties:
+        amount:
+          type: number
+        value:
+          type: number
+    GoodReadResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/GoodWithAmount'
+        message:
+          type: string
+      required:
+        - data
+        - message
+    GoodReadManyResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoodWithAmount'
+        message:
+          type: string
+        pagination:
+          $ref: '#/components/schemas/PaginationResponse'
+      required:
+        - data
+        - message
+        - pagination
+    SellGoodResponse:
+      type: object
+      properties:
+        data:
+          type: number
+        message:
+          type: string
+      required:
+        - data
+        - message
+    BuyGoodRequest:
+      type: object
+      properties:
+        userId:
+          type: number
+        amount:
+          type: number
+        pricePerUnit:
+          type: number
+      required:
+        - userId
+        - amount
+        - pricePerUnit
+    BuyGoodResponse:
+      type: object
+      properties:
+        data:
+          type: number
+        message:
+          type: string
+      required:
+        - data
+        - message
+    Unit:
+      type: string
+      enum:
+        - pcs
+        - kg
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        _count:
+          type: object
+          properties:
+            Goods:
+              type: integer
+              description: Number of goods in the category.
+      required:
+        - id
+        - name
+        - _count
+    CategoryBasic:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+        - id
+        - name
+    CategoryCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    CategoryUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The category name.
+      required:
+        - name
+    CategoryReadResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CategoryBasic'
+        message:
+          type: string
+    CategoryReadManyResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+        message:
+          type: string
+        pagination:
+          $ref: '#/components/schemas/PaginationResponse'
+    Error:
+      type: object
+      properties:
+        name:
+          type: string
+        message:
+          type: string
+        cause:
+          type: string
+          nullable: true
+    ValidationError:
+      $ref: '#/components/schemas/Error'
+    NotFoundError:
+      $ref: '#/components/schemas/Error'
+    InternalError:
+      $ref: '#/components/schemas/Error'
+    ConflictError:
+      $ref: '#/components/schemas/Error'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        role:
+          type: string
+          enum: [ ADMIN, USER ]
+    UserExtended:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+      properties:
+          deletedAt:
+            type: string
+            format: date-time
+            nullable: true
+    UserCreateData:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        confirmPassword:
+          type: string
+        role:
+          type: string
+          enum: [ ADMIN, USER ]
+      required:
+        - email
+        - password
+        - confirmPassword
+        - role
+
+    UserUpdateData:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [ ADMIN, USER ]
+      required:
+        - email
+        - password
+        - role
+
+    UserResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/UserExtended'
+        message:
+          type: string
+
+    UserListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserExtended'
+        message:
+          type: string
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
